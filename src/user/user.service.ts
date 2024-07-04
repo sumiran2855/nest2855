@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -24,16 +25,19 @@ export class UserService {
     username?: string;
   }): Promise<User> {
     const { id, email, username } = criteria;
-    let user:any;
+    let user: any;
 
     switch (true) {
       case !!id:
+        this.logger.debug(`Finding user by ID: ${id}`);
         user = await this.usersRepository.findOne({ where: { id } });
         break;
       case !!email:
+        this.logger.debug(`Finding user by email: ${email}`);
         user = await this.usersRepository.findOne({ where: { email } });
         break;
       case !!username:
+        this.logger.debug(`Finding user by username: ${username}`);
         user = await this.usersRepository.findOne({ where: { username } });
         break;
       default:
@@ -80,5 +84,19 @@ export class UserService {
       throw new NotFoundException(`User with email ${email} not found`);
     }
     return user;
+  }
+
+  async updatePassword(id: string, newPassword: string): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Update user's password
+    user.password = newPassword;
+
+    // Save the updated user entity
+    await this.usersRepository.save(user);
   }
 }

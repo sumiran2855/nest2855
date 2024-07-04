@@ -60,9 +60,8 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('Invalid or expired token');
     }
-
-    user.password = await bcrypt.hash(newPassword, 10);
-    await this.usersService.update(user.id, new UpdateUserDto());
+    const hashedPassword = await bcrypt.hash(newPassword, 8);
+    await this.usersService.updatePassword(user.id, hashedPassword);
   }
 
   // reset Token generation
@@ -77,7 +76,9 @@ export class AuthService {
   ): Promise<User | null> {
     try {
       const decoded: any = jwt.verify(token, jwtConstants.secret);
-      const user = await this.usersService.findOne(decoded.userId);
+
+      const user = await this.usersService.findOne({ id: decoded.userId });
+
       return user;
     } catch (error) {
       console.error('Invalid or expired token:', error);

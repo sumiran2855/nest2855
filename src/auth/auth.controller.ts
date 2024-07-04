@@ -17,7 +17,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Post('send-password-reset-email')
+  @Post('send-email')
   async sendPasswordResetEmail(@Body('username') username: string) {
     await this.authService.sendPasswordResetEmail(username);
     return { message: 'Email send successfully' };
@@ -30,6 +30,6 @@ export class AuthController {
     @Body('newPassword') newPassword: string,
   ) {
     await this.authService.resetPassword(token, newPassword);
-    return { message: 'password reset successfully' };
+    return { message: 'Password reset successfully' };
   }
 }

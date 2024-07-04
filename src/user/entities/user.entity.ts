@@ -8,13 +8,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-//import { BadRequestException } from '@nestjs/common';
-
-enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
-  MODERATOR = 'moderator',
-}
 
 @Entity()
 export class User extends BaseEntity {
@@ -30,16 +23,9 @@ export class User extends BaseEntity {
   @Column()
   password: string;
 
-  @Column({
-    type: 'enum',
-    enum: UserRole,
-    default: UserRole.USER,
-  })
-  role: UserRole;
+  @Column()
+  role: string;
 
-  @Column({ default: 'false' })
-  isActive: string;
-  
   @CreateDateColumn()
   createdAt: Date;
 

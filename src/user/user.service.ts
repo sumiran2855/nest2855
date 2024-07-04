@@ -12,6 +12,8 @@ export class UserService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
   ) {}
+
+  // Register
   async create(createUserDto: CreateUserDto): Promise<any> {
     const newUser: User = this.usersRepository.create(createUserDto);
     const savedUser: User = await this.usersRepository.save(newUser);
@@ -19,6 +21,7 @@ export class UserService {
     return { user: result };
   }
 
+  // get by Id, email, username
   async findOne(criteria: {
     id?: string;
     email?: string;
@@ -45,16 +48,15 @@ export class UserService {
           `User not found with criteria: ${JSON.stringify(criteria)}`,
         );
     }
-
     if (!user) {
       throw new NotFoundException(
         `User not found with criteria: ${JSON.stringify(criteria)}`,
       );
     }
-
     return user;
   }
 
+  // update using update dto
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
@@ -65,6 +67,7 @@ export class UserService {
     return user;
   }
 
+  // delete using id
   async remove(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
@@ -74,16 +77,9 @@ export class UserService {
     return user;
   }
 
+  // get all
   async findAll(): Promise<User[]> {
     return await this.usersRepository.find();
-  }
-
-  async ShowByEmail(email: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { email } });
-    if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
-    }
-    return user;
   }
 
   async updatePassword(id: string, newPassword: string): Promise<void> {
@@ -92,11 +88,20 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-
-    // Update user's password
     user.password = newPassword;
-
-    // Save the updated user entity
     await this.usersRepository.save(user);
+  }
+
+  async promoteToAdmin(id: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    user.role = 'admin'; 
+    await this.usersRepository.save(user);
+
+    return user;
   }
 }

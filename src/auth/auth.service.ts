@@ -6,10 +6,9 @@ import {
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { jwtConstants } from './jwt/jwt.constants';
+import { jwtConstants } from './jwt/jwt.strategy';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/entities/user.entity';
-import { UpdateUserDto } from '../user/dto/update-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -18,21 +17,25 @@ export class AuthService {
     private emailService: EmailService,
   ) {}
 
-  async login(username: string, password: string): Promise<string> {
+  // signIn
+  async login(
+    username: string,
+    password: string,
+  ): Promise<{ token: string; role: string }> {
     const user = await this.usersService.findOne({ username });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
-    const payload = { username: user.username, sub: user.id };
-    return jwt.sign(payload, jwtConstants.secret, { expiresIn: '10m' });
+    const payload = { username: user.username, sub: user.id, role: user.role };
+    const token = jwt.sign(payload, jwtConstants.secret, { expiresIn: '10m' });
+    return { token, role: user.role };
   }
 
+  // send mail using nodemailer
   async sendPasswordResetEmail(username: string): Promise<void> {
     const user = await this.usersService.findOne({ username });
 
@@ -54,6 +57,7 @@ export class AuthService {
     }
   }
 
+  // reset password using token
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const user = await this.validatePasswordResetToken(token);
 
@@ -76,9 +80,7 @@ export class AuthService {
   ): Promise<User | null> {
     try {
       const decoded: any = jwt.verify(token, jwtConstants.secret);
-
       const user = await this.usersService.findOne({ id: decoded.userId });
-
       return user;
     } catch (error) {
       console.error('Invalid or expired token:', error);

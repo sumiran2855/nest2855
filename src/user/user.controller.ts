@@ -6,11 +6,14 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards
 } from '@nestjs/common';
+import { Roles } from '../user/role/role.decorator';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { RolesGuard } from './role/roles.guard';
 
 @Controller('user')
 export class UserController {
@@ -28,7 +31,7 @@ export class UserController {
 
   @Get('email/:email')
   async findByEmail(@Param('email') email: string): Promise<User> {
-    return this.userService.ShowByEmail(email);
+    return this.userService.findOne({ email });
   }
 
   @Put(':id')
@@ -40,10 +43,17 @@ export class UserController {
   }
 
   @Delete(':id')
-  // @Roles('admin')
-  // @UseGuards(RolesGuard)
+  @Roles('admin') 
+  @UseGuards(RolesGuard)
   async remove(@Param('id') id: string): Promise<void> {
-    this.userService.remove(id);
+    await this.userService.remove(id);
+  }
+
+  @Post('promote-to-admin/:id')
+  @Roles('admin') 
+  @UseGuards(RolesGuard)
+  async promoteToAdmin(@Param('id') id: string): Promise<User> {
+    return this.userService.promoteToAdmin(id);
   }
 
   @Get()

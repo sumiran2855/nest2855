@@ -1,9 +1,15 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { JwtPayload } from 'jsonwebtoken';
 
 @Injectable()
 export class UserService {
@@ -48,14 +54,15 @@ export class UserService {
           `User not found with criteria: ${JSON.stringify(criteria)}`,
         );
     }
+
     if (!user) {
       throw new NotFoundException(
         `User not found with criteria: ${JSON.stringify(criteria)}`,
       );
     }
+
     return user;
   }
-
   // update using update dto
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
@@ -68,11 +75,12 @@ export class UserService {
   }
 
   // delete using id
-  async remove(id: string): Promise<User> {
+  async deleteUserById(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
+
     await this.usersRepository.remove(user);
     return user;
   }
@@ -98,10 +106,27 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-
-    user.role = 'admin'; 
+    user.role = 'admin';
     await this.usersRepository.save(user);
 
+    return user;
+  }
+
+  async validateUserByJwt(payload: JwtPayload): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id: payload.id },
+    });
+    if (!user) {
+      throw new UnauthorizedException('Invalid token');
+    }
+    return user;
+  }
+
+  async findOneByID(id: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     return user;
   }
 }

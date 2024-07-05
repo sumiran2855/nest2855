@@ -6,14 +6,16 @@ import {
   Delete,
   Param,
   Body,
-  UseGuards
+  UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
-import { Roles } from '../user/role/role.decorator';
+import { Roles } from './role/role.decorator';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { RolesGuard } from './role/roles.guard';
+import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
 
 @Controller('user')
 export class UserController {
@@ -42,22 +44,37 @@ export class UserController {
     return this.userService.update(id, updateUserDto);
   }
 
-  @Delete(':id')
-  @Roles('admin') 
-  @UseGuards(RolesGuard)
-  async remove(@Param('id') id: string): Promise<void> {
-    await this.userService.remove(id);
+  @Delete('deleteUser/:id')
+  @Roles('admin')
+  @UseGuards(RolesGuard, JwtAuthGuard)
+  async removeUser(@Param('id') id: string) {
+    await this.userService.deleteUserById(id);
+    return { message: 'User deleted successfully' };
   }
 
   @Post('promote-to-admin/:id')
-  @Roles('admin') 
-  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @UseGuards(RolesGuard, JwtAuthGuard)
   async promoteToAdmin(@Param('id') id: string): Promise<User> {
     return this.userService.promoteToAdmin(id);
   }
 
   @Get()
+  @Roles('admin')
+  @UseGuards(RolesGuard, JwtAuthGuard)
   async findAll(): Promise<User[]> {
     return this.userService.findAll();
+  }
+
+  @Get(':id')
+  async findByIdd(@Param('id') id: string): Promise<User> {
+    try {
+      return await this.userService.findOneByID(id);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('User not found');
+      }
+      throw error;
+    }
   }
 }

@@ -13,7 +13,9 @@ export class AuthController {
       createAuthDto.username,
       createAuthDto.password,
     );
+    //console.log(`User login successfully`);
     return { message: 'User login successful', token };
+    
   }
 
   @HttpCode(HttpStatus.OK)

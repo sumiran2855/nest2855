@@ -1,29 +1,54 @@
 // roles.guard.ts
-
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UserService } from '../user.service';
+import { ROLES_KEY } from './role.decorator';
+import { JwtService } from '@nestjs/jwt'; // Import JwtService
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private userService: UserService,
+    private jwtService: JwtService, // Inject JwtService
   ) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const roles = this.reflector.get<string[]>('roles', context.getHandler());
-    if (!roles) {
-      return true;
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (!requiredRoles || requiredRoles.length === 0) {
+      return true; 
     }
+
     const request = context.switchToHttp().getRequest();
-    const { user } = request;
+    const authorizationHeader = request.headers['authorization'];
+
+    if (!authorizationHeader) {
+      throw new UnauthorizedException('Authorization header not found');
+    }
+
+    const token = authorizationHeader.replace('Bearer ', '');
+    if (!token) {
+      throw new UnauthorizedException('Token not found');
+    }
+
+    let decodedToken: any;
+    try {
+      decodedToken = this.jwtService.verify(token);
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    const userId = decodedToken.sub;
+    const user = await this.userService.findOneByID(userId);
+
     if (!user) {
-      return false;
+      throw new UnauthorizedException('User not found');
     }
-    const userWithRole = await this.userService.findOne({ id: user.sub });
-    if (!userWithRole || !roles.includes(userWithRole.role)) {
-      return false;
-    }
-    return true;
+
+    return requiredRoles.some((role) => user.role === role);
   }
 }

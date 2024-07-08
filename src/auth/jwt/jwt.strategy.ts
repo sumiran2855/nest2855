@@ -4,7 +4,6 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 // import { jwtConstants } from './jwt.constants';
 import { UserService } from '../../user/user.service';
 import { User } from '../../user/entities/user.entity';
-import { JwtPayload } from 'jsonwebtoken';
 
 export const jwtConstants = {
   secret: 'sumiran9900',

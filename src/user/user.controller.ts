@@ -65,16 +65,4 @@ export class UserController {
   async findAll(): Promise<User[]> {
     return this.userService.findAll();
   }
-
-  @Get(':id')
-  async findByIdd(@Param('id') id: string): Promise<User> {
-    try {
-      return await this.userService.findOneByID(id);
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw new NotFoundException('User not found');
-      }
-      throw error;
-    }
-  }
 }

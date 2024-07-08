@@ -1,4 +1,5 @@
 // auth.module.ts
+
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './jwt/jwt.strategy';
@@ -18,7 +19,7 @@ import { RolesGuard } from '../user/role/roles.guard';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '10m' },
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User]), 
   ],
   controllers: [AuthController],
   providers: [
@@ -31,6 +32,6 @@ import { RolesGuard } from '../user/role/roles.guard';
       useClass: RolesGuard,
     },
   ],
-  exports: [AuthService, JwtModule],
+  exports: [AuthService, JwtModule], 
 })
 export class AuthModule {}

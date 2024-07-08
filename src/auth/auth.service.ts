@@ -9,12 +9,16 @@ import * as jwt from 'jsonwebtoken';
 import { jwtConstants } from './jwt/jwt.strategy';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/entities/user.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UserService,
     private emailService: EmailService,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
   // signIn
@@ -33,6 +37,29 @@ export class AuthService {
     const payload = { username: user.username, sub: user.id, role: user.role };
     const token = jwt.sign(payload, jwtConstants.secret, { expiresIn: '10m' });
     return { token, role: user.role };
+  }
+
+  async changePassword(
+    id: string,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<User> {
+    const user = await this.usersService.findOne({ id });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Verify old password
+    const isPasswordValid = await user.comparePassword(oldPassword);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid old password');
+    }
+
+    // Update password in user entity
+    await user.setPassword(newPassword);
+    await this.userRepository.save(user);
+
+    return user;
   }
 
   // send mail using nodemailer
@@ -65,7 +92,7 @@ export class AuthService {
       throw new NotFoundException('Invalid or expired token');
     }
     const hashedPassword = await bcrypt.hash(newPassword, 8);
-    await this.usersService.updatePassword(user.id, hashedPassword);
+    await this.usersService.ResetPassword(user.id, hashedPassword);
   }
 
   // reset Token generation

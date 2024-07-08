@@ -14,6 +14,7 @@ import { JwtPayload } from 'jsonwebtoken';
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
+
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -25,6 +26,15 @@ export class UserService {
     const savedUser: User = await this.usersRepository.save(newUser);
     const { password, ...result } = savedUser;
     return { user: result };
+  }
+
+  //find user by Id
+  async findOneByID(id: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 
   // get by Id, email, username
@@ -90,7 +100,7 @@ export class UserService {
     return await this.usersRepository.find();
   }
 
-  async updatePassword(id: string, newPassword: string): Promise<void> {
+  async ResetPassword(id: string, newPassword: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id } });
 
     if (!user) {
@@ -100,6 +110,7 @@ export class UserService {
     await this.usersRepository.save(user);
   }
 
+  // promote to admin
   async promoteToAdmin(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
 
@@ -112,20 +123,13 @@ export class UserService {
     return user;
   }
 
+  // validate jwt token
   async validateUserByJwt(payload: JwtPayload): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id: payload.id },
     });
     if (!user) {
       throw new UnauthorizedException('Invalid token');
-    }
-    return user;
-  }
-
-  async findOneByID(id: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id } });
-    if (!user) {
-      throw new NotFoundException('User not found');
     }
     return user;
   }

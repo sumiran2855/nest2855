@@ -23,6 +23,9 @@ export class User extends BaseEntity {
   @Column()
   password: string;
 
+  @Column({nullable:true})
+  otp:string
+
   @Column({ default: 'user' })
   role: string;
 

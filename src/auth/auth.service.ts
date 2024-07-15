@@ -11,22 +11,22 @@ import { EmailService } from '../email/email.service';
 import { User } from '../user/entities/user.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { JwtService } from '@nestjs/jwt';
+// import { randomBytes } from 'crypto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UserService,
     private emailService: EmailService,
+    private jwtService: JwtService,
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
 
   // signIn
-  async login(
-    username: string,
-    password: string,
-  ): Promise<{ token: string; role: string }> {
-    const user = await this.usersService.findOne({ username });
+  async login(username: string, password: string): Promise<any> {
+    const user = await this.usersService.findOneByUsername(username);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -34,9 +34,50 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await this.usersService.update(user.id, { otp });
+
+    const emailText = `Your OTP for login is: ${otp}`;
+    await this.emailService.sendMail(user.email, 'Login OTP', emailText);
+
+    const payload = {
+      username: user.username,
+      sub: user.id,
+      email: user.email,
+    };
+    const access_token = this.jwtService.sign(payload, {
+      secret: jwtConstants.secret,
+      expiresIn: '10m',
+    });
+
+    return {
+      access_token,
+      message: 'OTP sent successfully',
+      otp,
+    };
+  }
+
+  async verifyOTP(
+    email: string,
+    otp: string,
+  ): Promise<{ access_token: string }> {
+    const user = await this.usersService.findOneByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.otp !== otp) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+    await this.usersService.update(user.id, { otp: null });
+
     const payload = { username: user.username, sub: user.id, role: user.role };
-    const token = jwt.sign(payload, jwtConstants.secret, { expiresIn: '10m' });
-    return { token, role: user.role };
+    const access_token = this.jwtService.sign(payload, {
+      secret: jwtConstants.secret,
+      expiresIn: '10m',
+    });
+
+    return { access_token };
   }
 
   async changePassword(
@@ -44,7 +85,7 @@ export class AuthService {
     oldPassword: string,
     newPassword: string,
   ): Promise<User> {
-    const user = await this.usersService.findOne({ id });
+    const user = await this.usersService.findOneByID(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
@@ -64,14 +105,14 @@ export class AuthService {
 
   // send mail using nodemailer
   async sendPasswordResetEmail(username: string): Promise<void> {
-    const user = await this.usersService.findOne({ username });
+    const user = await this.usersService.findOneByUsername(username);
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     const token = await this.generatePasswordResetToken(user);
-    const resetLink = `https://example.com/reset-password?token=${token}`;
+    const resetLink = `http://localhost:5173/reset-password?token=${token}`;
 
     const subject = 'Password Reset Request';
     const text = `Dear ${user.username},\n\nPlease click on the following link to reset your password:\n${resetLink}\n\nIf you did not request this, please ignore this email.`;
@@ -92,22 +133,18 @@ export class AuthService {
       throw new NotFoundException('Invalid or expired token');
     }
     const hashedPassword = await bcrypt.hash(newPassword, 8);
-    await this.usersService.ResetPassword(user.id, hashedPassword);
+    await this.usersService.update(user.id, { password: hashedPassword });
   }
 
-  // reset Token generation
   private async generatePasswordResetToken(user: User): Promise<string> {
     const payload = { userId: user.id };
-    return jwt.sign(payload, jwtConstants.secret, { expiresIn: '10m' });
+    return this.jwtService.sign(payload, { secret: jwtConstants.secret, expiresIn: '10m' });
   }
 
-  //validate Password Reset token
-  private async validatePasswordResetToken(
-    token: string,
-  ): Promise<User | null> {
+  private async validatePasswordResetToken(token: string): Promise<User | null> {
     try {
-      const decoded: any = jwt.verify(token, jwtConstants.secret);
-      const user = await this.usersService.findOne({ id: decoded.userId });
+      const decoded: any = this.jwtService.verify(token, { secret: jwtConstants.secret });
+      const user = await this.usersService.findOneByID(decoded.userId);
       return user;
     } catch (error) {
       console.error('Invalid or expired token:', error);

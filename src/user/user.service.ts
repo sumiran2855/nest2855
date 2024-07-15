@@ -2,6 +2,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Session,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -10,7 +11,8 @@ import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtPayload } from 'jsonwebtoken';
-
+import { randomBytes } from 'crypto';
+import { EmailService } from '../email/email.service';
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
@@ -18,14 +20,40 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private emailService: EmailService,
   ) {}
 
   // Register
   async create(createUserDto: CreateUserDto): Promise<any> {
     const newUser: User = this.usersRepository.create(createUserDto);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const emailText = `Your OTP for registration is: ${otp}`;
+    await this.emailService.sendMail(
+      newUser.email,
+      'Verification OTP',
+      emailText,
+    );
+
+    newUser.otp = otp;
     const savedUser: User = await this.usersRepository.save(newUser);
     const { password, ...result } = savedUser;
     return { user: result };
+  }
+
+  //  verify OTP
+  async verifyOTP(email: string, otp: string): Promise<boolean> {
+    const user = await this.usersRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.otp !== otp) {
+      return false;
+    }
+    user.otp = null;
+    await this.usersRepository.save(user);
+
+    return true;
   }
 
   //find user by Id
@@ -37,42 +65,24 @@ export class UserService {
     return user;
   }
 
-  // get by Id, email, username
-  async findOne(criteria: {
-    id?: string;
-    email?: string;
-    username?: string;
-  }): Promise<User> {
-    const { id, email, username } = criteria;
-    let user: any;
-
-    switch (true) {
-      case !!id:
-        this.logger.debug(`Finding user by ID: ${id}`);
-        user = await this.usersRepository.findOne({ where: { id } });
-        break;
-      case !!email:
-        this.logger.debug(`Finding user by email: ${email}`);
-        user = await this.usersRepository.findOne({ where: { email } });
-        break;
-      case !!username:
-        this.logger.debug(`Finding user by username: ${username}`);
-        user = await this.usersRepository.findOne({ where: { username } });
-        break;
-      default:
-        throw new NotFoundException(
-          `User not found with criteria: ${JSON.stringify(criteria)}`,
-        );
-    }
-
+  // get by email
+  async findOneByEmail(email: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { email } });
     if (!user) {
-      throw new NotFoundException(
-        `User not found with criteria: ${JSON.stringify(criteria)}`,
-      );
+      throw new NotFoundException('User not found');
     }
-
     return user;
   }
+
+  // get by username
+  async findOneByUsername(username: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { username } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
   // update using update dto
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });

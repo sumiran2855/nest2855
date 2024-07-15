@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsStrongPassword, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsStrongPassword, MinLength } from 'class-validator';
 
 export class CreateAuthDto {
 
@@ -10,4 +10,7 @@ export class CreateAuthDto {
   @IsStrongPassword()
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
   password?: string;
+
+  @IsOptional()
+  otp?:string
 }

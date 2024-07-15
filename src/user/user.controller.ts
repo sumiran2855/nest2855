@@ -8,6 +8,7 @@ import {
   Body,
   UseGuards,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Roles } from './role/role.decorator';
 import { UserService } from './user.service';
@@ -26,17 +27,37 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @Get(':id')
+  @Post('/register/verify')
+  async verifyRegistration(
+    @Body() verificationDto: { email: string; otp: string },
+  ): Promise<{ message: string }> {
+    const { email, otp } = verificationDto;
+
+    const isOTPVerified = await this.userService.verifyOTP(email, otp);
+
+    if (!isOTPVerified) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+
+    return { message: 'User registered successfully' };
+  }
+
+  @Get('getUser/:id')
   async findById(@Param('id') id: string): Promise<User> {
-    return this.userService.findOne({ id });
+    return this.userService.findOneByID(id);
   }
 
   @Get('email/:email')
   async findByEmail(@Param('email') email: string): Promise<User> {
-    return this.userService.findOne({ email });
+    return this.userService.findOneByEmail(email);
   }
 
-  @Put(':id')
+  @Get('username/:username')
+  async findByUsername(@Param('email') username: string): Promise<User> {
+    return this.userService.findOneByUsername(username);
+  }
+
+  @Put('updateUser/:id')
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,

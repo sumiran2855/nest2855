@@ -7,29 +7,33 @@ import {
   UseGuards,
   Put,
   Param,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
+// import { CreateAuthDto } from './dto/create-auth.dto';
 import { JwtAuthGuard } from './jwt/jwt-auth.guard';
 import { User } from '../user/entities/user.entity';
-import { UserService } from '../user/user.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private authService: AuthService,
-    private userService: UserService,
-  ) {}
+  constructor(private authService: AuthService) {}
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  async login(@Body() createAuthDto: CreateAuthDto) {
-    const token = await this.authService.login(
+  async login(@Body() createAuthDto: { username: string; password: string }) {
+    return this.authService.login(
       createAuthDto.username,
       createAuthDto.password,
     );
-    //console.log(`User login successfully`);
-    return { message: 'User login successful', token };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('verify-otp')
+  async verifyOTP(@Req() req: any, @Body() verifyOtpDto: { otp: string }) {
+    console.log('JWT payload:', req.user);
+    const email = req.user.email;
+    return this.authService.verifyOTP(email, verifyOtpDto.otp);
   }
 
   @Put('change-password/:id')

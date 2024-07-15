@@ -1,16 +1,16 @@
-// roles.guard.ts
+
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UserService } from '../user.service';
 import { ROLES_KEY } from './role.decorator';
-import { JwtService } from '@nestjs/jwt'; // Import JwtService
+import { JwtService } from '@nestjs/jwt'; 
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private userService: UserService,
-    private jwtService: JwtService, // Inject JwtService
+    private jwtService: JwtService, 
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

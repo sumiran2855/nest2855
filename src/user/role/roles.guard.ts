@@ -35,7 +35,7 @@ export class RolesGuard implements CanActivate {
       throw new UnauthorizedException('Token not found');
     }
 
-    let decodedToken: any;
+    let decodedToken;
     try {
       decodedToken = this.jwtService.verify(token);
     } catch (error) {
@@ -44,7 +44,7 @@ export class RolesGuard implements CanActivate {
 
     const userId = decodedToken.sub;
     const user = await this.userService.findOneByID(userId);
-
+    //console.log(user);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }

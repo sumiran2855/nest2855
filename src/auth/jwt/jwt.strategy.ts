@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 // import { jwtConstants } from './jwt.constants';
 import { UserService } from '../../user/user.service';
-import { User } from '../../user/entities/user.entity';
+// import { User } from '../../user/entities/user.entity';
 
 export const jwtConstants = {
   secret: 'sumiran9900',

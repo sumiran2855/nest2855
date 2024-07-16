@@ -24,11 +24,15 @@ export class AuthService {
     private userRepository: Repository<User>,
   ) {}
 
-  // signIn
+  // login
   async login(username: string, password: string): Promise<any> {
     const user = await this.usersService.findOneByUsername(username);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if(!user.isVerified){
+      throw new UnauthorizedException('Email not verified');
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
@@ -58,7 +62,7 @@ export class AuthService {
     };
   }
 
-  async verifyOTP(
+  async verifyLoginOTP(
     email: string,
     otp: string,
   ): Promise<{ access_token: string }> {

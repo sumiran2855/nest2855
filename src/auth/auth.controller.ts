@@ -33,7 +33,7 @@ export class AuthController {
   async verifyOTP(@Req() req: any, @Body() verifyOtpDto: { otp: string }) {
     console.log('JWT payload:', req.user);
     const email = req.user.email;
-    return this.authService.verifyOTP(email, verifyOtpDto.otp);
+    return this.authService.verifyLoginOTP(email, verifyOtpDto.otp);
   }
 
   @Put('change-password/:id')

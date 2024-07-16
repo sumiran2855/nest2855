@@ -7,8 +7,10 @@ import {
   Param,
   Body,
   UseGuards,
-  NotFoundException,
+  Request,
   UnauthorizedException,
+  Query,
+  Res,
 } from '@nestjs/common';
 import { Roles } from './role/role.decorator';
 import { UserService } from './user.service';
@@ -27,19 +29,12 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @Post('/register/verify')
-  async verifyRegistration(
-    @Body() verificationDto: { email: string; otp: string },
-  ): Promise<{ message: string }> {
-    const { email, otp } = verificationDto;
-
-    const isOTPVerified = await this.userService.verifyOTP(email, otp);
-
-    if (!isOTPVerified) {
-      throw new UnauthorizedException('Invalid OTP');
-    }
-
-    return { message: 'User registered successfully' };
+  @Get('/verify')
+  async verifyEmail(@Query('token') token: string, @Res() res): Promise<void> {
+    const isVerified = await this.userService.verifyEmail(token);
+    if (isVerified) {
+      return res.redirect('http://localhost:5173/verify');
+    } 
   }
 
   @Get('getUser/:id')
@@ -57,12 +52,18 @@ export class UserController {
     return this.userService.findOneByUsername(username);
   }
 
-  @Put('updateUser/:id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-  ): Promise<User> {
-    return this.userService.update(id, updateUserDto);
+  @Get('/profile')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Request() req): Promise<User> {
+    const userId = req.user.id;
+    return this.userService.getProfile(userId);
+  }
+
+  @Put('/updateProfile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto): Promise<User> {
+    const userId = req.user.id;
+    return this.userService.update(userId, updateUserDto);
   }
 
   @Delete('deleteUser/:id')

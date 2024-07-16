@@ -2,7 +2,6 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  Session,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -11,7 +10,7 @@ import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtPayload } from 'jsonwebtoken';
-import { randomBytes } from 'crypto';
+import * as crypto from 'crypto';
 import { EmailService } from '../email/email.service';
 @Injectable()
 export class UserService {
@@ -23,37 +22,38 @@ export class UserService {
     private emailService: EmailService,
   ) {}
 
-  // Register
   async create(createUserDto: CreateUserDto): Promise<any> {
+    if (createUserDto.password !== createUserDto.confirmPassword) {
+      throw new UnauthorizedException('Passwords do not match');
+    }
+
     const newUser: User = this.usersRepository.create(createUserDto);
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationToken = crypto.randomBytes(32).toString('hex');
 
-    const emailText = `Your OTP for registration is: ${otp}`;
-    await this.emailService.sendMail(
-      newUser.email,
-      'Verification OTP',
-      emailText,
-    );
+    const emailText = `Your verification link is: http://localhost:3000/user/verify?token=${verificationToken}`;
+    await this.emailService.sendMail(newUser.email, 'Email Verification', emailText);
 
-    newUser.otp = otp;
+    newUser.verificationToken = verificationToken;
     const savedUser: User = await this.usersRepository.save(newUser);
     const { password, ...result } = savedUser;
     return { user: result };
   }
 
-  //  verify OTP
-  async verifyOTP(email: string, otp: string): Promise<boolean> {
-    const user = await this.usersRepository.findOne({ where: { email } });
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    const user = await this.usersRepository.findOne({ where: { verificationToken: token } });
+
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Verification token is invalid or has expired');
     }
-    if (user.otp !== otp) {
-      return false;
-    }
-    user.otp = null;
+
+    user.isVerified = true;
+    user.verificationToken = null;
     await this.usersRepository.save(user);
 
-    return true;
+    const congratsEmailText = 'Congratulations, your email has been verified successfully!';
+    await this.emailService.sendMail(user.email, 'Email Verified', congratsEmailText);
+
+    return { message: 'User verified successfully' };
   }
 
   //find user by Id
@@ -77,6 +77,14 @@ export class UserService {
   // get by username
   async findOneByUsername(username: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { username } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  async getProfile(userId: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }

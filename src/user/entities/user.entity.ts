@@ -23,8 +23,14 @@ export class User extends BaseEntity {
   @Column()
   password: string;
 
-  @Column({nullable:true})
-  otp:string
+  @Column({ nullable: true })
+  verificationToken: string;
+
+  @Column({ default: false })
+  isVerified: boolean;
+
+  @Column({ nullable: true })
+  otp: string;
 
   @Column({ default: 'user' })
   role: string;
@@ -49,6 +55,6 @@ export class User extends BaseEntity {
   }
 
   async setPassword(newPassword: string): Promise<void> {
-    this.password = await bcrypt.hash(newPassword, 10); 
-}
+    this.password = await bcrypt.hash(newPassword, 10);
+  }
 }

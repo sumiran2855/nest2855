@@ -1,4 +1,12 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, IsStrongPassword, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsStrongPassword,
+  MinLength,
+} from 'class-validator';
+import { Match } from '../entities/validator';
 
 export class CreateUserDto {
   @IsEmail({}, { message: 'Email is invalid' })
@@ -12,6 +20,11 @@ export class CreateUserDto {
   @IsStrongPassword()
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
   password?: string;
+
+  @IsNotEmpty({ message: 'Confirm password should not be empty' })
+  @IsString()
+  @Match('password', { message: 'Passwords do not match' })
+  confirmPassword?: string;
 
   @IsNotEmpty({ message: 'Please enter OTP' })
   @IsOptional()

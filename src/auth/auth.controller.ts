@@ -36,14 +36,16 @@ export class AuthController {
     return this.authService.verifyLoginOTP(email, verifyOtpDto.otp);
   }
 
-  @Put('change-password/:id')
   @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Put('change-password')
   async changePassword(
-    @Param('id') id: string,
+    @Req() req: any,
     @Body('oldPassword') oldPassword: string,
     @Body('newPassword') newPassword: string,
   ): Promise<User> {
-    return this.authService.changePassword(id, oldPassword, newPassword);
+    const userId = req.user.userId;
+    return this.authService.changePassword(userId, oldPassword, newPassword);
   }
 
   @HttpCode(HttpStatus.OK)

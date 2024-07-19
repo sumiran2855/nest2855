@@ -101,7 +101,7 @@ export class AuthService {
     }
 
     // Update password in user entity
-    await user.setPassword(newPassword);
+    user.password = await bcrypt.hash(newPassword, 10);
     await this.userRepository.save(user);
 
     return user;

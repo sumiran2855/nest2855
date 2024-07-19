@@ -22,6 +22,7 @@ export class UserService {
     private emailService: EmailService,
   ) {}
 
+  // register user
   async create(createUserDto: CreateUserDto): Promise<any> {
     if (createUserDto.password !== createUserDto.confirmPassword) {
       throw new UnauthorizedException('Passwords do not match');
@@ -39,6 +40,7 @@ export class UserService {
     return { user: result };
   }
 
+  // email verification to activate user
   async verifyEmail(token: string): Promise<{ message: string }> {
     const user = await this.usersRepository.findOne({ where: { verificationToken: token } });
 
@@ -83,6 +85,7 @@ export class UserService {
     return user;
   }
 
+  // to get profile 
   async getProfile(userId: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
@@ -118,6 +121,7 @@ export class UserService {
     return await this.usersRepository.find();
   }
 
+  // reset password 
   async ResetPassword(id: string, newPassword: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id } });
 

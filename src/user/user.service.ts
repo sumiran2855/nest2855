@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -25,22 +26,21 @@ export class UserService {
   // register user
   async create(createUserDto: CreateUserDto): Promise<any> {
     if (createUserDto.password !== createUserDto.confirmPassword) {
-      throw new UnauthorizedException('Passwords do not match');
+      throw new BadRequestException('Passwords do not match');
     }
 
-    const newUser: User = this.usersRepository.create(createUserDto);
+    const newUser = this.usersRepository.create(createUserDto);
     const verificationToken = crypto.randomBytes(32).toString('hex');
 
     const emailText = `Your verification link is: http://localhost:3000/user/verify?token=${verificationToken}`;
     await this.emailService.sendMail(newUser.email, 'Email Verification', emailText);
 
     newUser.verificationToken = verificationToken;
-    const savedUser: User = await this.usersRepository.save(newUser);
+    const savedUser = await this.usersRepository.save(newUser);
     const { password, ...result } = savedUser;
     return { user: result };
   }
 
-  // email verification to activate user
   async verifyEmail(token: string): Promise<{ message: string }> {
     const user = await this.usersRepository.findOne({ where: { verificationToken: token } });
 
@@ -76,14 +76,6 @@ export class UserService {
     return user;
   }
 
-  // get by username
-  async findOneByUsername(username: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { username } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
-  }
 
   // to get profile 
   async getProfile(userId: string): Promise<User> {
@@ -118,7 +110,7 @@ export class UserService {
 
   // get all
   async findAll(): Promise<User[]> {
-    return await this.usersRepository.find();
+    return this.usersRepository.find();
   }
 
   // reset password 

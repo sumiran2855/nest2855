@@ -1,4 +1,3 @@
-
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UserService } from '../user.service';
@@ -14,10 +13,10 @@ export class RolesGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
-      ROLES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (!requiredRoles || requiredRoles.length === 0) {
       return true; 
@@ -44,7 +43,6 @@ export class RolesGuard implements CanActivate {
 
     const userId = decodedToken.sub;
     const user = await this.userService.findOneByID(userId);
-    //console.log(user);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }

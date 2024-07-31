@@ -5,14 +5,12 @@ import {
 } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
-import { jwtConstants } from './jwt/jwt.strategy';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/entities/user.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-// import { randomBytes } from 'crypto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -20,18 +18,19 @@ export class AuthService {
     private usersService: UserService,
     private emailService: EmailService,
     private jwtService: JwtService,
+    private configService: ConfigService,
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
 
   // login
-  async login(username: string, password: string): Promise<any> {
-    const user = await this.usersService.findOneByUsername(username);
+  async login(email: string, password: string): Promise<any> {
+    const user = await this.usersService.findOneByEmail(email); 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if(!user.isVerified){
+    if (!user.isVerified) {
       throw new UnauthorizedException('Email not verified');
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -46,13 +45,13 @@ export class AuthService {
     await this.emailService.sendMail(user.email, 'Login OTP', emailText);
 
     const payload = {
-      username: user.username,
+      email: user.email, 
       sub: user.id,
-      email: user.email,
+      role: user.role,
     };
     const access_token = this.jwtService.sign(payload, {
-      secret: jwtConstants.secret,
-      expiresIn: '10m',
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn: '10h',
     });
 
     return {
@@ -66,7 +65,7 @@ export class AuthService {
     email: string,
     otp: string,
   ): Promise<{ access_token: string }> {
-    const user = await this.usersService.findOneByEmail(email);
+    const user = await this.usersService.findOneByEmail(email); 
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -75,10 +74,10 @@ export class AuthService {
     }
     await this.usersService.update(user.id, { otp: null });
 
-    const payload = { username: user.username, sub: user.id, role: user.role };
+    const payload = { email: user.email, sub: user.id, role: user.role }; 
     const access_token = this.jwtService.sign(payload, {
-      secret: jwtConstants.secret,
-      expiresIn: '10m',
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn: '10h',
     });
 
     return { access_token };
@@ -108,8 +107,9 @@ export class AuthService {
   }
 
   // send mail using nodemailer
-  async sendPasswordResetEmail(username: string): Promise<void> {
-    const user = await this.usersService.findOneByUsername(username);
+  async sendPasswordResetEmail(email: string): Promise<void> {
+
+    const user = await this.usersService.findOneByEmail(email); 
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -119,7 +119,7 @@ export class AuthService {
     const resetLink = `http://localhost:5173/reset-password?token=${token}`;
 
     const subject = 'Password Reset Request';
-    const text = `Dear ${user.username},\n\nPlease click on the following link to reset your password:\n${resetLink}\n\nIf you did not request this, please ignore this email.`;
+    const text = `Dear ${user.email},\n\nPlease click on the following link to reset your password:\n${resetLink}\n\nIf you did not request this, please ignore this email.`; // Changed greeting to email
 
     try {
       await this.emailService.sendMail(user.email, subject, text);
@@ -142,12 +142,19 @@ export class AuthService {
 
   private async generatePasswordResetToken(user: User): Promise<string> {
     const payload = { userId: user.id };
-    return this.jwtService.sign(payload, { secret: jwtConstants.secret, expiresIn: '10m' });
+    return this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn: '10h',
+    });
   }
 
-  private async validatePasswordResetToken(token: string): Promise<User | null> {
+  private async validatePasswordResetToken(
+    token: string,
+  ): Promise<User | null> {
     try {
-      const decoded: any = this.jwtService.verify(token, { secret: jwtConstants.secret });
+      const decoded: any = this.jwtService.verify(token, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
       const user = await this.usersService.findOneByID(decoded.userId);
       return user;
     } catch (error) {

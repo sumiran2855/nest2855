@@ -8,9 +8,9 @@ import {
   Body,
   UseGuards,
   Request,
-  UnauthorizedException,
   Query,
   Res,
+  Req,
 } from '@nestjs/common';
 import { Roles } from './role/role.decorator';
 import { UserService } from './user.service';
@@ -19,6 +19,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { RolesGuard } from './role/roles.guard';
 import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('user')
 export class UserController {
@@ -34,7 +35,7 @@ export class UserController {
     const isVerified = await this.userService.verifyEmail(token);
     if (isVerified) {
       return res.redirect('http://localhost:5173/verify');
-    } 
+    }
   }
 
   @Get('getUser/:id')
@@ -47,44 +48,61 @@ export class UserController {
     return this.userService.findOneByEmail(email);
   }
 
-  @Get('username/:username')
-  async findByUsername(@Param('email') username: string): Promise<User> {
-    return this.userService.findOneByUsername(username);
-  }
-
-  @Get('/profile')
+  @Get('profile')
   @UseGuards(JwtAuthGuard)
-  async getProfile(@Request() req): Promise<User> {
-    const userId = req.user.id;
-    return this.userService.getProfile(userId);
+  async getProfile(@Request() req) {
+    const userId = req.user.userId;
+    const user = await this.userService.findOneByID(userId);
+    return user;
   }
 
   @Put('/updateProfile')
   @UseGuards(JwtAuthGuard)
-  async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto): Promise<User> {
+  async updateProfile(
+    @Request() req,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<User> {
     const userId = req.user.id;
     return this.userService.update(userId, updateUserDto);
   }
 
+
+  @UseGuards(AuthGuard('jwt'))
   @Delete('deleteUser/:id')
-  @Roles('admin')
-  @UseGuards(RolesGuard, JwtAuthGuard)
-  async removeUser(@Param('id') id: string) {
-    await this.userService.deleteUserById(id);
-    return { message: 'User deleted successfully' };
+  async deleteUser(@Param('id') id: string, @Req() req) {
+    if (req.user.role !== 'admin') {
+      return {
+        statusCode: 403,
+        message: 'Forbidden',
+      };
+    }
+    return this.userService.deleteUserById(id);
   }
 
-  @Post('promote-to-admin/:id')
-  @Roles('admin')
-  @UseGuards(RolesGuard, JwtAuthGuard)
-  async promoteToAdmin(@Param('id') id: string): Promise<User> {
-    return this.userService.promoteToAdmin(id);
-  }
 
-  @Get()
-  @Roles('admin')
-  @UseGuards(RolesGuard, JwtAuthGuard)
-  async findAll(): Promise<User[]> {
+  @UseGuards(JwtAuthGuard)
+  @Get('getAllUsers')
+  async getAllUsers(@Req() req) {
+    console.log('User role:', req.user.role);
+
+    if (req.user.role !== 'admin') {
+      return {
+        statusCode: 403,
+        message: 'do not have permission to fetch user',
+      };
+    }
     return this.userService.findAll();
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('promote-to-admin/:id')
+  async promoteToAdmin(@Param('id') id: string, @Req() req) {
+    if (req.user.role !== 'admin') {
+      return {
+        statusCode: 403,
+        message: 'Forbidden',
+      };
+    }
+    return this.userService.promoteToAdmin(id);
   }
 }

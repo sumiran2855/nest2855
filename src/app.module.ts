@@ -8,8 +8,10 @@ import { User } from './user/entities/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { IssuesModule } from './data/data.module';
 import { Issue } from './data/entity/Issue.entity';
+import { Agreement } from './data/entity/Agreement.entity';
+import { OrganisationDetails } from './data/entity/Organisation.entity';
 
-const entities = [User,Issue];
+const entities = [User,Issue,Agreement,OrganisationDetails];
 @Module({
   imports: [
     ConfigModule.forRoot({

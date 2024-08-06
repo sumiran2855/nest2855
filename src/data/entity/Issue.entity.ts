@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+// import { BusinessDto, QuoteDto } from '../dto/create.issue.dto';
 
 @Entity()
 export class Issue {
@@ -11,3 +12,5 @@ export class Issue {
   @Column()
   description: string;
 }
+
+

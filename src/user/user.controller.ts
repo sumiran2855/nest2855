@@ -34,7 +34,7 @@ export class UserController {
   async verifyEmail(@Query('token') token: string, @Res() res): Promise<void> {
     const isVerified = await this.userService.verifyEmail(token);
     if (isVerified) {
-      return res.redirect('http://localhost:5173/verify');
+      return res.redirect('http://localhost:3001/verify');
     }
   }
 

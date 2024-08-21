@@ -6,11 +6,9 @@ import {
   HttpStatus,
   UseGuards,
   Put,
-  Param,
   Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-// import { CreateAuthDto } from './dto/create-auth.dto';
 import { JwtAuthGuard } from './jwt/jwt-auth.guard';
 import { User } from '../user/entities/user.entity';
 
@@ -20,9 +18,9 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  async login(@Body() createAuthDto: { username: string; password: string }) {
+  async login(@Body() createAuthDto: { email: string; password: string }) {
     return this.authService.login(
-      createAuthDto.username,
+      createAuthDto.email,
       createAuthDto.password,
     );
   }

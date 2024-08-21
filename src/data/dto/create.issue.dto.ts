@@ -1,5 +1,5 @@
-import { IsArray, IsNotEmpty, IsString } from 'class-validator';
-
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 export class CreateIssueDto {
   @IsNotEmpty()
   @IsString()
@@ -9,6 +9,7 @@ export class CreateIssueDto {
   @IsString()
   description: string;
 }
+
 
 export class CreateAgreementDto {
   @IsString()
@@ -21,6 +22,7 @@ export class CreateAgreementDto {
   email: string;
 
   @IsString()
+  @MinLength(10, { message: 'Contact must be at least 10 characters long' })
   contact: string;
 
   @IsString()
@@ -33,40 +35,98 @@ export class CreateAgreementDto {
   state: string;
 
   @IsString()
+  @MinLength(6, { message: 'Contact must be at least 6 characters long' })
   zipcode: string;
 
   @IsString()
   customerType: string;
 
   @IsArray()
-  businesses: Array<{
-    Buisness: string;
-    Address: string;
-    Address2: string;
-    city: string;
-    state: string;
-    Zip: string;
-  }>;
+  @ValidateNested({ each: true })
+  @Type(() => BusinessDto)
+  @IsOptional()
+  businesses?: BusinessDto[];
 
   @IsArray()
-  quotes: Array<{
-    quoteNumber: string;
-    policyNumber: string;
-    carrierCompany: string;
-    wholesaler: string;
-    coverage: string;
-    effectiveDate: Date;
-    expirationDate: Date;
-    minDaysToCancel: number;
-    minEarnedRate: number;
-    premium: number;
-    taxes: number;
-    otherFees: number;
-    brokerFee: number;
-    policyFee: number;
-    commission: number;
-    AgencyFess: number;
-  }>;
+  @ValidateNested({ each: true })
+  @Type(() => QuoteDto)
+  @IsOptional()
+  quotes?: QuoteDto[];
+}
+
+export class BusinessDto {
+  @IsString()
+  Buisness: string;
+
+  @IsString()
+  Address: string;
+
+  @IsString()
+  Address2: string;
+
+  @IsString()
+  city: string;
+
+  @IsString()
+  state: string;
+
+  @IsString()
+  Zip: string;
+}
+
+export class QuoteDto {
+  @IsString()
+  quoteNumber: string;
+
+  @IsString()
+  policyNumber: string;
+
+  @IsString()
+  carrierCompany: string;
+
+  @IsString()
+  wholesaler: string;
+
+  @IsString()
+  coverage: string;
+
+  @Type(() => Date)
+  @IsDate()
+  effectiveDate: Date;
+
+  @Type(() => Date)
+  @IsDate()
+  expirationDate: Date;
+
+  @IsOptional()
+  minDaysToCancel?: number;
+
+  @IsOptional()
+  minEarnedRate?: number;
+
+  @IsOptional()
+  premium?: number;
+
+  @IsOptional()
+  taxes?: number;
+
+  @IsOptional()
+  otherFees?: number;
+
+  @IsOptional()
+  brokerFee?: number;
+
+  @IsOptional()
+  policyFee?: number;
+
+  @IsOptional()
+  commission?: number;
+
+  @IsOptional()
+  AgencyFess?: number;
+
+  @IsNumber()
+  totalCost: number;
 }
 
 export class CreateOrganisationDetailsDto {
@@ -105,25 +165,27 @@ export class CreateOrganisationDetailsDto {
 
   @IsString()
   ownerPhone: string;
+}
+
+export class BankDetailsDto {
+  @IsString()
+  bankAccountHolderName?: string;
 
   @IsString()
-  bankAccountHolderName: string;
+  bankAccountNumber?: string;
 
   @IsString()
-  bankAccountNumber: string;
+  bankRoutingNumber?: string;
 
   @IsString()
-  bankRoutingNumber: string;
+  trustAccountHolderName?: string;
 
   @IsString()
-  trustAccountHolderName: string;
+  trustAccountNumber?: string;
 
   @IsString()
-  trustAccountNumber: string;
+  trustRoutingNumber?: string;
 
   @IsString()
-  trustRoutingNumber: string;
-
-  @IsString()
-  oneTimePaymentRoutingNumber: string;
+  Account?: string;
 }

@@ -1,12 +1,32 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Req,
+  Request,
+} from '@nestjs/common';
+import {
+  BankDetailsDto,
   CreateAgreementDto,
   CreateIssueDto,
   CreateOrganisationDetailsDto,
 } from '../data/dto/create.issue.dto';
-import { AgreementService, IssuesService, OrganisationDetailsService } from '../data/data.service';
-import { OrganisationDetails } from './entity/Organisation.entity';
-import { UpdateOrganisationDetailsDto } from './dto/update.data.dto';
+import {
+  AgreementService,
+  BankDetailsService,
+  IssuesService,
+  OrganisationDetailsService,
+} from '../data/data.service';
+import { BankDetails } from '../user/entities/bankDetails.entity';
+import { OrganisationDetails } from '../user/entities/organisation.entity';
+import {
+  updateBankDetailsDto,
+  UpdateOrganisationDetailsDto,
+} from 'src/user/dto/update-user.dto';
 
 @Controller('issues')
 export class IssuesController {
@@ -19,44 +39,68 @@ export class IssuesController {
 }
 
 @Controller('agreement')
-export class agreementController {
+export class AgreementController {
   constructor(private readonly agreementService: AgreementService) {}
 
   @Post('/create')
   async create(@Body() createAgreementDto: CreateAgreementDto) {
-    return this.agreementService.create(createAgreementDto);
+    try {
+      return this.agreementService.create(createAgreementDto);
+    } catch (error) {
+      console.error('Error creating agreement:', error);
+      throw new BadRequestException('Invalid data provided');
+    }
   }
 }
-
 @Controller('organisation')
 export class OrganisationDetailsController {
-  constructor(private readonly organisationDetailsService: OrganisationDetailsService) {}
+  constructor(
+    private readonly organisationDetailsService: OrganisationDetailsService,
+  ) {}
 
-  @Post('save')
-  create(@Body() createOrganisationDetailsDto: CreateOrganisationDetailsDto): Promise<OrganisationDetails> {
+  @Post('/save')
+  create(@Body() createOrganisationDetailsDto: CreateOrganisationDetailsDto) {
     return this.organisationDetailsService.create(createOrganisationDetailsDto);
   }
 
-  @Get()
-  findAll(): Promise<OrganisationDetails[]> {
-    return this.organisationDetailsService.findAll();
+  @Get('/getUser/:userId')
+  findOne(@Param('id') userId: string): Promise<OrganisationDetails> {
+    return this.organisationDetailsService.findOneByUserId(userId);
   }
 
-  @Get('/getUser/:id')
-  findOne(@Param('id') id: string): Promise<OrganisationDetails> {
-    return this.organisationDetailsService.findOne(id);
-  }
-
-  @Patch('/update/:id')
-  update(
-    @Param('id') id: string,
+  @Put('/update/:OrganisationId')
+  async update(
+    @Param('OrganisationId') OrganisationId: string,
     @Body() updateOrganisationDetailsDto: UpdateOrganisationDetailsDto,
-  ): Promise<OrganisationDetails> {
-    return this.organisationDetailsService.update(id, updateOrganisationDetailsDto);
+  ) {
+    return this.organisationDetailsService.update(
+      OrganisationId,
+      updateOrganisationDetailsDto,
+    );
+  }
+}
+
+@Controller('bank')
+export class BankDetailsController {
+  constructor(private readonly bankDetailsService: BankDetailsService) {}
+
+  @Post('/create')
+  async create(@Body() bankDetailsDto: BankDetailsDto) {
+    return this.bankDetailsService.create(bankDetailsDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string): Promise<void> {
-    return this.organisationDetailsService.remove(id);
+  @Get('/getUser/:userId')
+  findOne(@Param('id') userId: string): Promise<BankDetails> {
+    return this.bankDetailsService.findOneByUserId(userId);
+  }
+
+  @Put('/update/:userId')
+  update(
+    // @Param('userId') userId: string,
+    @Request() req,
+    @Body() UpdateBankDetailsDto: updateBankDetailsDto,
+  ): Promise<BankDetails> {
+    const userId = req.user.id;
+    return this.bankDetailsService.updateByUserId(userId, UpdateBankDetailsDto);
   }
 }

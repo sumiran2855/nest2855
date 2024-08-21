@@ -8,10 +8,15 @@ import { User } from './user/entities/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { IssuesModule } from './data/data.module';
 import { Issue } from './data/entity/Issue.entity';
-import { Agreement } from './data/entity/Agreement.entity';
-import { OrganisationDetails } from './data/entity/Organisation.entity';
+import { Agreement, Business, Quote } from './data/entity/Agreement.entity';
+// import { OrganisationDetails } from './data/entity/Organisation.entity';
+// import { BankDetails } from './data/entity/bankDetails.entity';
+import { OrganisationDetails } from './user/entities/organisation.entity';
+import { BankDetails } from './user/entities/bankDetails.entity';
 
-const entities = [User,Issue,Agreement,OrganisationDetails];
+
+
+const entities = [User,Issue,Agreement,OrganisationDetails,BankDetails,Business,Quote];
 @Module({
   imports: [
     ConfigModule.forRoot({

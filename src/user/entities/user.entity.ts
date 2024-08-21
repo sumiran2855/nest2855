@@ -1,18 +1,18 @@
-
-
 import {
-  BaseEntity,
   BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
+import { OrganisationDetails } from './organisation.entity';
+import { BankDetails } from './bankDetails.entity';
 
 @Entity()
-export class User extends BaseEntity {
+export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -72,6 +72,15 @@ export class User extends BaseEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(
+    () => OrganisationDetails,
+    (organisationDetails) => organisationDetails.user,
+  )
+  businesses: OrganisationDetails[];
+
+  @OneToMany(() => BankDetails, (bankDetails) => bankDetails.user)
+  bankDetails: BankDetails[];
 
   @BeforeInsert()
   async hashPasswordAndValidate() {

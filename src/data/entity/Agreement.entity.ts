@@ -1,8 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+
+import { Column, Entity, PrimaryGeneratedColumn, OneToMany, ManyToOne } from "typeorm";
 
 @Entity()
 export class Agreement {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: number;
 
   @Column()
@@ -32,33 +33,96 @@ export class Agreement {
   @Column()
   customerType: string;
 
-  @Column('json', { nullable: true })
-  businesses: Array<{
-    Buisness: string;
-    Address: string;
-    Address2: string;
-    city: string;
-    state: string;
-    Zip: string;
-  }>;
+  @OneToMany(() => Business, business => business.agreement)
+  businesses: Business[];
 
-  @Column('json', { nullable: true })
-  quotes: Array<{
-    quoteNumber: string;
-    policyNumber: string;
-    carrierCompany: string;
-    wholesaler: string;
-    coverage: string;
-    effectiveDate: Date;
-    expirationDate: Date;
-    minDaysToCancel: number;
-    minEarnedRate: number;
-    premium: number;
-    taxes: number;
-    otherFees: number;
-    brokerFee: number;
-    policyFee: number;
-    commission: number;
-    AgencyFess: number;
-  }>;
+  @OneToMany(() => Quote, quote => quote.agreement)
+  quotes: Quote[];
+}
+
+@Entity()
+export class Business {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  Buisness: string;
+
+  @Column()
+  Address: string;
+
+  @Column()
+  Address2: string;
+
+  @Column()
+  city: string;
+
+  @Column()
+  state: string;
+
+  @Column()
+  Zip: string;
+
+  @ManyToOne(() => Agreement, agreement => agreement.businesses)
+  agreement: Agreement;
+}
+
+@Entity()
+export class Quote {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  quoteNumber: string;
+
+  @Column()
+  policyNumber: string;
+
+  @Column()
+  carrierCompany: string;
+
+  @Column()
+  wholesaler: string;
+
+  @Column()
+  coverage: string;
+
+  @Column()
+  effectiveDate: Date;
+
+  @Column()
+  expirationDate: Date;
+
+  @Column()
+  minDaysToCancel: number;
+
+  @Column()
+  minEarnedRate: number;
+
+  @Column()
+  premium: number;
+
+  @Column()
+  taxes: number;
+
+  @Column()
+  otherFees: number;
+
+  @Column()
+  brokerFee: number;
+
+  @Column()
+  policyFee: number;
+
+  @Column()
+  commission: number;
+
+  @Column()
+  AgencyFess: number;
+
+  @Column('float', { default: 0 })
+  totalCost: number;
+
+  @ManyToOne(() => Agreement, agreement => agreement.quotes)
+  agreement: Agreement;
 }

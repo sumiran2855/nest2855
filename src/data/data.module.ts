@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
-import { agreementController, IssuesController } from '../data/data.controller';
-import { AgreementService, IssuesService } from '../data/data.service';
+import { AgreementController, BankDetailsController, IssuesController, OrganisationDetailsController } from '../data/data.controller';
+import { AgreementService, BankDetailsService, IssuesService, OrganisationDetailsService } from '../data/data.service';
 import { Issue } from './entity/Issue.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Agreement } from './entity/Agreement.entity';
-import { OrganisationDetails } from './entity/Organisation.entity';
+import { Agreement, Business, Quote } from './entity/Agreement.entity';
+import { User } from '../user/entities/user.entity';
+import { BankDetails } from '../user/entities/bankDetails.entity';
+import { OrganisationDetails } from '../user/entities/organisation.entity';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([Issue,Agreement,OrganisationDetails]),],
-  controllers: [IssuesController,agreementController],
-  providers: [IssuesService,AgreementService],
+  imports:[TypeOrmModule.forFeature([Issue,Agreement,OrganisationDetails,BankDetails,Business,Quote,User]),],
+  controllers: [IssuesController,AgreementController,OrganisationDetailsController,BankDetailsController],
+  providers: [IssuesService,AgreementService,OrganisationDetailsService,BankDetailsService],
 })
 export class IssuesModule {}

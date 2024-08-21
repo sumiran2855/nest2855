@@ -116,7 +116,7 @@ export class AuthService {
     }
 
     const token = await this.generatePasswordResetToken(user);
-    const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+    const resetLink = `http://localhost:3001/reset-password?token=${token}`;
 
     const subject = 'Password Reset Request';
     const text = `Dear ${user.email},\n\nPlease click on the following link to reset your password:\n${resetLink}\n\nIf you did not request this, please ignore this email.`; // Changed greeting to email

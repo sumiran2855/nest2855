@@ -1,7 +1,11 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsStrongPassword, MinLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsStrongPassword,
+  MinLength,
+} from 'class-validator';
 
 export class CreateAuthDto {
-
   @IsNotEmpty({ message: 'Username should not be empty' })
   @MinLength(3, { message: 'Username should be at least 3 characters long' })
   username?: string;
@@ -12,5 +16,5 @@ export class CreateAuthDto {
   password?: string;
 
   @IsOptional()
-  otp?:string
+  otp?: string;
 }

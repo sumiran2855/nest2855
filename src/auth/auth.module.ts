@@ -10,7 +10,9 @@ import { EmailService } from '../email/email.service';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from '../user/role/roles.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-
+import { BankDetailsService, OrganisationDetailsService } from '../data/data.service';
+import { OrganisationDetails } from '../user/entities/organisation.entity';
+import { BankDetails } from '../user/entities/bankDetails.entity';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         signOptions: { expiresIn: '10m' },
       }),
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User,OrganisationDetails,BankDetails]),
   ],
   controllers: [AuthController],
   providers: [
@@ -31,6 +33,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     JwtStrategy,
     UserService,
     EmailService,
+    OrganisationDetailsService,
+    BankDetailsService,
     {
       provide: APP_GUARD,
       useClass: RolesGuard,

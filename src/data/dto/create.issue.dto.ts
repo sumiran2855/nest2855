@@ -1,4 +1,4 @@
-import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 export class CreateIssueDto {
   @IsNotEmpty()
@@ -131,40 +131,50 @@ export class QuoteDto {
 
 export class CreateOrganisationDetailsDto {
   @IsString()
-  businessName: string;
+  businessName?: string;
 
   @IsString()
-  phone: string;
+  phone?: string;
 
   @IsString()
-  website: string;
+  email?: string;
 
   @IsString()
-  address: string;
+  website?: string;
 
   @IsString()
-  taxId: string;
+  streetAddress?: string;
 
   @IsString()
-  type: string;
+  taxId?: string;
 
   @IsString()
-  ownerName: string;
+  type?: string;
 
   @IsString()
-  ownerJobTitle: string;
+  ownerName?: string;
 
   @IsString()
-  ownerDOB: string;
+  ownerJobTitle?: string;
 
   @IsString()
-  ownerSSN: string;
+  ownerDOB?: string;
 
   @IsString()
-  ownerAddress: string;
+  ownerSSN?: string;
 
   @IsString()
-  ownerPhone: string;
+  streetAddress2?: string;
+
+  @IsString()
+  ownerPhone?: string;
+
+  @IsString()
+  status?: string;
+
+  @IsNotEmpty()
+  @IsUUID()
+  userId: string;
 }
 
 export class BankDetailsDto {
@@ -188,4 +198,6 @@ export class BankDetailsDto {
 
   @IsString()
   Account?: string;
+
+  userId?: string;
 }

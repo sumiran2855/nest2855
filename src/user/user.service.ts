@@ -13,6 +13,15 @@ import { Repository } from 'typeorm';
 import { JwtPayload } from 'jsonwebtoken';
 import * as crypto from 'crypto';
 import { EmailService } from '../email/email.service';
+import {
+  BankDetailsDto,
+  CreateOrganisationDetailsDto,
+} from '../data/dto/create.issue.dto';
+import {
+  BankDetailsService,
+  OrganisationDetailsService,
+} from '../data/data.service';
+import { OrganisationDetails } from './entities/organisation.entity';
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
@@ -21,6 +30,8 @@ export class UserService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private emailService: EmailService,
+    private readonly organisationDetailsService: OrganisationDetailsService,
+    private readonly bankDetailService: BankDetailsService,
   ) {}
 
   // register user
@@ -33,27 +44,62 @@ export class UserService {
     const verificationToken = crypto.randomBytes(32).toString('hex');
 
     const emailText = `Your verification link is: http://localhost:3000/user/verify?token=${verificationToken}`;
-    await this.emailService.sendMail(newUser.email, 'Email Verification', emailText);
+    await this.emailService.sendMail(
+      newUser.email,
+      'Email Verification',
+      emailText,
+    );
 
     newUser.verificationToken = verificationToken;
     const savedUser = await this.usersRepository.save(newUser);
+
+    const organisationDetailsDto: CreateOrganisationDetailsDto = {
+      userId: savedUser.id,
+      email: createUserDto.email,
+      businessName: createUserDto.businessName,
+      phone: createUserDto.phone,
+      website: createUserDto.website,
+      streetAddress: createUserDto.streetAddress,
+      ownerName: createUserDto.firstName + ' ' + createUserDto.lastName,
+      ownerJobTitle: createUserDto.role,
+      streetAddress2: createUserDto.streetAddress2,
+      ownerPhone: createUserDto.ownerPhone,
+    };
+
+    const BankDetailsDto: BankDetailsDto = {
+      userId: savedUser.id,
+    };
+
+    await this.bankDetailService.create(BankDetailsDto);
+
+    await this.organisationDetailsService.create(organisationDetailsDto);
+
     const { password, ...result } = savedUser;
     return { user: result };
   }
 
   async verifyEmail(token: string): Promise<{ message: string }> {
-    const user = await this.usersRepository.findOne({ where: { verificationToken: token } });
+    const user = await this.usersRepository.findOne({
+      where: { verificationToken: token },
+    });
 
     if (!user) {
-      throw new NotFoundException('Verification token is invalid or has expired');
+      throw new NotFoundException(
+        'Verification token is invalid or has expired',
+      );
     }
 
     user.isVerified = true;
     user.verificationToken = null;
     await this.usersRepository.save(user);
 
-    const congratsEmailText = 'Congratulations, your email has been verified successfully!';
-    await this.emailService.sendMail(user.email, 'Email Verified', congratsEmailText);
+    const congratsEmailText =
+      'Congratulations, your email has been verified successfully!';
+    await this.emailService.sendMail(
+      user.email,
+      'Email Verified',
+      congratsEmailText,
+    );
 
     return { message: 'User verified successfully' };
   }
@@ -76,8 +122,7 @@ export class UserService {
     return user;
   }
 
-
-  // to get profile 
+  // to get profile
   async getProfile(userId: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
@@ -113,7 +158,7 @@ export class UserService {
     return this.usersRepository.find();
   }
 
-  // reset password 
+  // reset password
   async ResetPassword(id: string, newPassword: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id } });
 

@@ -15,6 +15,9 @@ export class OrganisationDetails {
   @Column({ name: 'businessName', nullable: true })
   businessName?: string;
 
+  @Column({ name: 'email', nullable: true })
+  email?: string;
+
   @Column({ name: 'phone', nullable: true })
   phone?: string;
 
@@ -25,10 +28,10 @@ export class OrganisationDetails {
   ownerName?: string;
 
   @Column({ name: 'address', nullable: true })
-  address?: string;
+  streetAddress?: string;
 
   @Column({ name: 'ownerAddress', nullable: true })
-  ownerAddress?: string;
+  streetAddress2?: string;
 
   @Column({ name: 'ownerJobTitle', nullable: true })
   ownerJobTitle?: string;
@@ -47,6 +50,9 @@ export class OrganisationDetails {
 
   @Column({ name: 'ownerPhone', nullable: true })
   ownerPhone?: string;
+
+  @Column({ nullable: true, default: 'pending' })
+  status?: string;
 
   @ManyToOne(() => User, (user) => user.businesses)
   @JoinColumn({ name: 'userId' })

@@ -33,7 +33,10 @@ export class BankDetails {
   @Column({ name: 'Account', nullable: true })
   Account?: string;
 
+  @Column('blob', { nullable: true })
+  document?: Buffer;
+
   @ManyToOne(() => User, (user) => user.bankDetails)
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user?: User;
 }

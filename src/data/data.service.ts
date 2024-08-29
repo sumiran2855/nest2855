@@ -133,14 +133,23 @@ export class OrganisationDetailsService {
   constructor(
     @InjectRepository(OrganisationDetails)
     private readonly organisationDetailsRepository: Repository<OrganisationDetails>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
   ) {}
 
   async create(
     createOrganisationDetailsDto: CreateOrganisationDetailsDto,
   ): Promise<OrganisationDetails> {
-    const organisationDetails = this.organisationDetailsRepository.create(
-      createOrganisationDetailsDto,
-    );
+    const { userId, ...rest } = createOrganisationDetailsDto;
+
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const organisationDetails = this.organisationDetailsRepository.create({
+      ...rest,
+      user,
+    });
     return this.organisationDetailsRepository.save(organisationDetails);
   }
 
@@ -148,20 +157,46 @@ export class OrganisationDetailsService {
     return this.organisationDetailsRepository.find();
   }
 
-  async findOneByUserId(OrganisationId: string): Promise<OrganisationDetails> {
-    return this.organisationDetailsRepository.findOneBy({ OrganisationId });
+  async findOneByUserId(userId: string): Promise<OrganisationDetails> {
+    return this.organisationDetailsRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['user'],
+    });
   }
 
   async update(
-    OrganisationId: string,
+    userId: string,
     updateOrganisationDetailsDto: UpdateOrganisationDetailsDto,
   ): Promise<OrganisationDetails> {
     const organisationDetails =
-      await this.organisationDetailsRepository.findOneBy({ OrganisationId });
+      await this.organisationDetailsRepository.findOne({
+        where: { user: { id: userId } },
+      });
+
     if (!organisationDetails) {
-      throw new Error('Organisation not found');
+      throw new Error('Organisation details not found for this user.');
     }
+
     Object.assign(organisationDetails, updateOrganisationDetailsDto);
+    await this.organisationDetailsRepository.save(organisationDetails);
+
+    return organisationDetails;
+  }
+
+  async updateStatus(
+    userId: string,
+    status: string,
+  ): Promise<OrganisationDetails> {
+    const organisationDetails =
+      await this.organisationDetailsRepository.findOne({
+        where: { user: { id: userId } },
+      });
+
+    if (!organisationDetails) {
+      throw new Error('Organisation details not found for this user.');
+    }
+
+    organisationDetails.status = 'verified';
     await this.organisationDetailsRepository.save(organisationDetails);
 
     return organisationDetails;
@@ -174,37 +209,62 @@ export class BankDetailsService {
     @InjectRepository(BankDetails)
     private BankDetailsRepository: Repository<BankDetails>,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly usersRepository: Repository<User>,
   ) {}
 
   async create(createBankDto: BankDetailsDto): Promise<BankDetails> {
-    const newBankDetails = this.BankDetailsRepository.create(createBankDto);
-    return this.BankDetailsRepository.save(newBankDetails);
-  }
+    const { userId, ...rest } = createBankDto;
 
-  async findOneByUserId(id: string): Promise<BankDetails> {
-    return this.BankDetailsRepository.findOneBy({ id });
-  }
-
-  async updateByUserId(
-    userId: string,
-    updateBankDetailsDto: updateBankDetailsDto,
-  ): Promise<BankDetails> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      throw new NotFoundException('User not found');
     }
+    const bankDetails = this.BankDetailsRepository.create({
+      ...rest,
+      user,
+    });
+    return this.BankDetailsRepository.save(bankDetails);
+  }
 
-    let bankDetails = await this.BankDetailsRepository.findOne({
-      where: { id: userId },
+  async upload(
+    createBankDetailsDto: BankDetailsDto,
+    file: Express.Multer.File,
+  ): Promise<BankDetails> {
+    const bankDetails = this.BankDetailsRepository.create({
+      ...createBankDetailsDto,
+      document: file.buffer, // Save the file as a BLOB
+    });
+    return this.BankDetailsRepository.save(bankDetails);
+  }
+
+  async findOneByUserId(userId: string): Promise<BankDetails> {
+    return this.BankDetailsRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['user'],
+    });
+  }
+
+  async update(
+    userId: string,
+    UpdateBankDetailsDto: updateBankDetailsDto,
+    file?: Express.Multer.File,
+  ): Promise<BankDetails> {
+    const bankDetails = await this.BankDetailsRepository.findOne({
+      where: { user: { id: userId } },
     });
 
     if (!bankDetails) {
-      throw new NotFoundException(`Bank details not found for user ${userId}`);
+      throw new NotFoundException('Bank details not found for this user.');
     }
 
-    Object.assign(bankDetails, updateBankDetailsDto);
-    return await this.BankDetailsRepository.save(bankDetails);
+    Object.assign(bankDetails, UpdateBankDetailsDto);
+
+    if (file) {
+      bankDetails.document = file.buffer;
+    }
+
+    await this.BankDetailsRepository.save(bankDetails);
+
+    return bankDetails;
   }
 }

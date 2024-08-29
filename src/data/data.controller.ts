@@ -3,12 +3,16 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   Post,
   Put,
   Req,
   Request,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   BankDetailsDto,
   CreateAgreementDto,
@@ -60,6 +64,10 @@ export class OrganisationDetailsController {
 
   @Post('/save')
   create(@Body() createOrganisationDetailsDto: CreateOrganisationDetailsDto) {
+    Logger.log(
+      'Received Organisation Details:',
+      JSON.stringify(createOrganisationDetailsDto),
+    );
     return this.organisationDetailsService.create(createOrganisationDetailsDto);
   }
 
@@ -68,14 +76,30 @@ export class OrganisationDetailsController {
     return this.organisationDetailsService.findOneByUserId(userId);
   }
 
-  @Put('/update/:OrganisationId')
+  @Get('/getAllUsers')
+  async getAllUsers(@Req() req) {
+    return this.organisationDetailsService.findAll();
+  }
+
+  @Put('/update/:userId')
   async update(
-    @Param('OrganisationId') OrganisationId: string,
+    @Param('userId') userId: string,
     @Body() updateOrganisationDetailsDto: UpdateOrganisationDetailsDto,
   ) {
     return this.organisationDetailsService.update(
-      OrganisationId,
+      userId,
       updateOrganisationDetailsDto,
+    );
+  }
+
+  @Put('/updateStatus/:userId')
+  async updateStatus(
+    @Param('userId') userId: string,
+    @Body() updateOrganisationDetailsDto: UpdateOrganisationDetailsDto,
+  ): Promise<OrganisationDetails> {
+    return this.organisationDetailsService.updateStatus(
+      userId,
+      updateOrganisationDetailsDto.status,
     );
   }
 }
@@ -85,22 +109,38 @@ export class BankDetailsController {
   constructor(private readonly bankDetailsService: BankDetailsService) {}
 
   @Post('/create')
-  async create(@Body() bankDetailsDto: BankDetailsDto) {
+  create(@Body() bankDetailsDto: BankDetailsDto) {
+    Logger.log(
+      'Received Organisation Details:',
+      JSON.stringify(bankDetailsDto),
+    );
     return this.bankDetailsService.create(bankDetailsDto);
   }
 
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('document'))
+  async upload(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() createBankDetailsDto: BankDetailsDto,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    return this.bankDetailsService.upload(createBankDetailsDto, file);
+  }
+
   @Get('/getUser/:userId')
-  findOne(@Param('id') userId: string): Promise<BankDetails> {
+  findOne(@Param('userId') userId: string): Promise<BankDetails> {
     return this.bankDetailsService.findOneByUserId(userId);
   }
 
   @Put('/update/:userId')
-  update(
-    // @Param('userId') userId: string,
-    @Request() req,
+  @UseInterceptors(FileInterceptor('file'))
+  async update(
+    @Param('userId') userId: string,
     @Body() UpdateBankDetailsDto: updateBankDetailsDto,
-  ): Promise<BankDetails> {
-    const userId = req.user.id;
-    return this.bankDetailsService.updateByUserId(userId, UpdateBankDetailsDto);
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.bankDetailsService.update(userId, UpdateBankDetailsDto, file);
   }
 }

@@ -13,6 +13,7 @@ import { User } from './entities/user.entity';
 import { BankDetailsService, OrganisationDetailsService } from '../data/data.service';
 import { BankDetailsController, OrganisationDetailsController } from '../data/data.controller';
 
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([User,OrganisationDetails,BankDetails]),

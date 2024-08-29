@@ -66,13 +66,6 @@ export class UserController {
     return this.userService.update(userId, updateUserDto);
   }
 
-//   @Put('/update/:id')
-// @UseGuards(JwtAuthGuard)
-// async updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
-//   return this.userService.update(id, updateUserDto);
-// }
-
-
   @UseGuards(AuthGuard('jwt'))
   @Delete('deleteUser/:id')
   async deleteUser(@Param('id') id: string, @Req() req) {
@@ -85,12 +78,9 @@ export class UserController {
     return this.userService.deleteUserById(id);
   }
 
-
   @UseGuards(JwtAuthGuard)
   @Get('getAllUsers')
   async getAllUsers(@Req() req) {
-    console.log('User role:', req.user.role);
-
     if (req.user.role !== 'admin') {
       return {
         statusCode: 403,

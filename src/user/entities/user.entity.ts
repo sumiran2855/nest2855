@@ -35,10 +35,10 @@ export class User {
   role: string;
 
   @Column({ default: '' })
-  companyName: string;
+  businessName: string;
 
   @Column({ default: '' })
-  mobileNumber: string;
+  phone: string;
 
   @Column({ default: '' })
   website: string;
@@ -65,7 +65,7 @@ export class User {
   lastName: string;
 
   @Column({ default: '' })
-  phoneNumber: string;
+  ownerPhone: string;
 
   @CreateDateColumn()
   createdAt: Date;

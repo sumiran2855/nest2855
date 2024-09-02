@@ -79,8 +79,7 @@ export class User {
   )
   businesses: OrganisationDetails[];
 
-  @OneToMany(() => BankDetails, (bankDetails) => bankDetails.user)
-  bankDetails: BankDetails[];
+
 
   @BeforeInsert()
   async hashPasswordAndValidate() {

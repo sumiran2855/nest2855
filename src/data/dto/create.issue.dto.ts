@@ -1,4 +1,15 @@
-import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MinLength, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsDate,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  minLength,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 export class CreateIssueDto {
   @IsNotEmpty()
@@ -9,7 +20,6 @@ export class CreateIssueDto {
   @IsString()
   description: string;
 }
-
 
 export class CreateAgreementDto {
   @IsString()
@@ -35,7 +45,7 @@ export class CreateAgreementDto {
   state: string;
 
   @IsString()
-  @MinLength(6, { message: 'Contact must be at least 6 characters long' })
+  @MinLength(6, { message: 'Zipcode must be at least 6 characters long' })
   zipcode: string;
 
   @IsString()
@@ -71,14 +81,17 @@ export class BusinessDto {
   state: string;
 
   @IsString()
+  @MinLength(6, { message: 'Zipcode must be at least 6 characters long' })
   Zip: string;
 }
 
 export class QuoteDto {
   @IsString()
+  @MinLength(5, { message: 'quote number must be at least 5 characters long' })
   quoteNumber: string;
 
   @IsString()
+  @MinLength(5, { message: 'policy number must be at least 5 characters long' })
   policyNumber: string;
 
   @IsString()
@@ -134,6 +147,7 @@ export class CreateOrganisationDetailsDto {
   businessName?: string;
 
   @IsString()
+  @MinLength(10, { message: 'Contact must be at least 10 characters long' })
   phone?: string;
 
   @IsString()
@@ -146,6 +160,7 @@ export class CreateOrganisationDetailsDto {
   streetAddress?: string;
 
   @IsString()
+  @MinLength(9, { message: 'taxId must be at least 9 characters long' })
   taxId?: string;
 
   @IsString()
@@ -161,12 +176,14 @@ export class CreateOrganisationDetailsDto {
   ownerDOB?: string;
 
   @IsString()
+  @MinLength(9, { message: 'ownerSSN must be at least 9 characters long' })
   ownerSSN?: string;
 
   @IsString()
   streetAddress2?: string;
 
   @IsString()
+  @MinLength(10, { message: 'Contact must be at least 10 characters long' })
   ownerPhone?: string;
 
   @IsString()
@@ -182,22 +199,32 @@ export class BankDetailsDto {
   bankAccountHolderName?: string;
 
   @IsString()
+  @MinLength(9, { message: 'Account must be at least 9 characters long' })
   bankAccountNumber?: string;
 
   @IsString()
+  @MinLength(9, {
+    message: 'Routing number must be at least 9 characters long',
+  })
   bankRoutingNumber?: string;
 
   @IsString()
   trustAccountHolderName?: string;
 
   @IsString()
+  @MinLength(9, { message: 'Account must be at least 9 characters long' })
   trustAccountNumber?: string;
 
   @IsString()
+  @MinLength(9, {
+    message: 'Routing number must be at least 9 characters long',
+  })
   trustRoutingNumber?: string;
 
   @IsString()
   Account?: string;
 
-  userId?: string;
+  document?: Buffer;
+  
+  OrganisationId?: string;
 }

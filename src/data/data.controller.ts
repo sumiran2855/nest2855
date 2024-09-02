@@ -130,7 +130,8 @@ export class BankDetailsController {
   }
 
   @Get('/getUser/:userId')
-  findOne(@Param('userId') userId: string): Promise<BankDetails> {
+  async getBankDetailsByUserId(@Param('userId') userId: string): Promise<BankDetails> {
+    console.log(userId);
     return this.bankDetailsService.findOneByUserId(userId);
   }
 

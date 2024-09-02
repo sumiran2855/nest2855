@@ -22,6 +22,7 @@ import {
   OrganisationDetailsService,
 } from '../data/data.service';
 import { OrganisationDetails } from './entities/organisation.entity';
+import { BankDetails } from './entities/bankDetails.entity';
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
@@ -29,9 +30,13 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(OrganisationDetails)
+    private organisationDetailsRepository: Repository<OrganisationDetails>,
+    @InjectRepository(BankDetails)
+    private BankDetailsRepository: Repository<BankDetails>,
     private emailService: EmailService,
     private readonly organisationDetailsService: OrganisationDetailsService,
-    private readonly bankDetailService: BankDetailsService,
+
   ) {}
 
   // register user
@@ -66,11 +71,9 @@ export class UserService {
       ownerPhone: createUserDto.ownerPhone,
     };
 
-    const BankDetailsDto: BankDetailsDto = {
-      userId: savedUser.id,
-    };
 
-    await this.bankDetailService.create(BankDetailsDto);
+
+  
 
     await this.organisationDetailsService.create(organisationDetailsDto);
 
@@ -148,8 +151,9 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-
-    await this.usersRepository.remove(user);
+    await this.organisationDetailsRepository.delete(id);
+    await this.BankDetailsRepository.delete(id);
+    await this.usersRepository.remove(user)
     return user;
   }
 

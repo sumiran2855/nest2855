@@ -45,11 +45,29 @@ export class CreateAgreementDto {
   state: string;
 
   @IsString()
+  delegateEmail?: string;
+
+  @IsString()
+  delegateFirstname?: string;
+
+  @IsString()
+  delegateLastname?: string;
+  
+  @IsString()
+  delegateContact?: string;
+
+  @IsString()
   @MinLength(6, { message: 'Zipcode must be at least 6 characters long' })
   zipcode: string;
 
   @IsString()
   customerType: string;
+
+  @IsString()
+  userId: string;
+
+  @IsOptional()
+  createdAt?: Date;
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -66,23 +84,23 @@ export class CreateAgreementDto {
 
 export class BusinessDto {
   @IsString()
-  Buisness: string;
+  Buisness?: string;
 
   @IsString()
-  Address: string;
+  Address?: string;
 
   @IsString()
-  Address2: string;
+  Address2?: string;
 
   @IsString()
-  city: string;
+  city?: string;
 
   @IsString()
-  state: string;
+  state?: string;
 
   @IsString()
   @MinLength(6, { message: 'Zipcode must be at least 6 characters long' })
-  Zip: string;
+  Zip?: string;
 }
 
 export class QuoteDto {
@@ -225,6 +243,6 @@ export class BankDetailsDto {
   Account?: string;
 
   document?: Buffer;
-  
+
   OrganisationId?: string;
 }

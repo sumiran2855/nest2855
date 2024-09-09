@@ -1,5 +1,13 @@
-
-import { Column, Entity, PrimaryGeneratedColumn, OneToMany, ManyToOne } from "typeorm";
+import { User } from 'src/user/entities/user.entity';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+} from 'typeorm';
 
 @Entity()
 export class Agreement {
@@ -28,15 +36,34 @@ export class Agreement {
   state: string;
 
   @Column()
-  zipcode: string;
+  zipcode?: string;
+
+  @Column()
+  delegateEmail?: string;
+
+  @Column()
+  delegateFirstname?: string;
+  
+  @Column()
+  delegateLastname?: string;
+
+  @Column()
+  delegateContact?: string;
 
   @Column()
   customerType: string;
 
-  @OneToMany(() => Business, business => business.agreement)
+  @CreateDateColumn()
+  createdAt: Date; 
+
+  @ManyToOne(() => User, (user) => user.agreements)
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @OneToMany(() => Business, (business) => business.agreement)
   businesses: Business[];
 
-  @OneToMany(() => Quote, quote => quote.agreement)
+  @OneToMany(() => Quote, (quote) => quote.agreement)
   quotes: Quote[];
 }
 
@@ -46,25 +73,25 @@ export class Business {
   id: number;
 
   @Column()
-  Buisness: string;
+  Buisness?: string;
 
   @Column()
-  Address: string;
+  Address?: string;
 
   @Column()
-  Address2: string;
+  Address2?: string;
 
   @Column()
-  city: string;
+  city?: string;
 
   @Column()
-  state: string;
+  state?: string;
 
   @Column()
-  Zip: string;
+  Zip?: string;
 
-  @ManyToOne(() => Agreement, agreement => agreement.businesses)
-  agreement: Agreement;
+  @ManyToOne(() => Agreement, (agreement) => agreement.businesses)
+  agreement?: Agreement;
 }
 
 @Entity()
@@ -123,6 +150,6 @@ export class Quote {
   @Column('float', { default: 0 })
   totalCost: number;
 
-  @ManyToOne(() => Agreement, agreement => agreement.quotes)
+  @ManyToOne(() => Agreement, (agreement) => agreement.quotes)
   agreement: Agreement;
 }

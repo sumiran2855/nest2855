@@ -19,6 +19,7 @@ import { BankDetails } from '../user/entities/bankDetails.entity';
 import { User } from '../user/entities/user.entity';
 import { OrganisationDetails } from 'src/user/entities/organisation.entity';
 import {
+  CreateUserDto,
   UpdateOrganisationDetailsDto,
   updateBankDetailsDto,
 } from 'src/user/dto/update-user.dto';
@@ -45,11 +46,23 @@ export class AgreementService {
     private businessRepository: Repository<Business>,
     @InjectRepository(Quote)
     private quoteRepository: Repository<Quote>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
   async create(createAgreementDto: CreateAgreementDto): Promise<Agreement> {
     try {
-      const newAgreement = this.agreementRepository.create(createAgreementDto);
+      const { userId, ...agreementData } = createAgreementDto;
+
+      const user = await this.userRepository.findOneBy({ id: userId });
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const newAgreement = this.agreementRepository.create({
+        ...agreementData,
+        user: user,
+      });
       const savedAgreement = await this.agreementRepository.save(newAgreement);
 
       if (createAgreementDto.businesses) {
@@ -121,10 +134,44 @@ export class AgreementService {
       quote.commission = quoteDto.commission;
       quote.AgencyFess = quoteDto.AgencyFess;
       quote.agreement = { id: agreementId } as Agreement;
+
+      const premium = Number(quote.premium) || 0;
+      const taxes = Number(quote.taxes) || 0;
+      const otherFees = Number(quote.otherFees) || 0;
+      const brokerFee = Number(quote.brokerFee) || 0;
+      const policyFee = Number(quote.policyFee) || 0;
+      const commissionRate = Number(quote.minEarnedRate) || 0;
+      const commission = premium * (commissionRate / 100);
+      const AgencyFess = Number(quote.AgencyFess) || 0;
+
+      quote.totalCost =
+        premium +
+        taxes +
+        otherFees +
+        brokerFee +
+        policyFee +
+        commission +
+        AgencyFess;
+
       return quote;
     });
 
     return this.quoteRepository.save(quotes);
+  }
+
+  async getAgreementsByUserId(userId: string): Promise<Agreement[]> {
+    try {
+      const agreements = await this.agreementRepository.find({
+        where: { user: { id: userId } },
+        relations: ['user', 'quotes'],
+        order: { createdAt: 'DESC' },
+      });
+
+      return agreements;
+    } catch (error) {
+      console.error('Error fetching agreements:', error);
+      throw new Error('Unable to fetch agreements');
+    }
   }
 }
 

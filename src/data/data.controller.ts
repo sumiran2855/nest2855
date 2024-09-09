@@ -55,6 +55,12 @@ export class AgreementController {
       throw new BadRequestException('Invalid data provided');
     }
   }
+  @Get('user/:userId')
+  async getAgreementsByUserId(@Param('userId') userId: string) {
+    
+    return this.agreementService.getAgreementsByUserId(userId);
+  }
+
 }
 @Controller('organisation')
 export class OrganisationDetailsController {

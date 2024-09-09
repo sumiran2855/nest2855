@@ -10,6 +10,7 @@ import {
 import * as bcrypt from 'bcryptjs';
 import { OrganisationDetails } from './organisation.entity';
 import { BankDetails } from './bankDetails.entity';
+import { Agreement } from 'src/data/entity/Agreement.entity';
 
 @Entity()
 export class User {
@@ -79,7 +80,8 @@ export class User {
   )
   businesses: OrganisationDetails[];
 
-
+  @OneToMany(() => Agreement, agreement => agreement.user)
+  agreements: Agreement[];
 
   @BeforeInsert()
   async hashPasswordAndValidate() {

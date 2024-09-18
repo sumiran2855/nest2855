@@ -32,7 +32,7 @@ export class CreateAgreementDto {
   email: string;
 
   @IsString()
-  @MinLength(10, { message: 'Contact must be at least 10 characters long' })
+  // @MinLength(10, { message: 'Contact must be at least 10 characters long' })
   contact: string;
 
   @IsString()
@@ -57,7 +57,7 @@ export class CreateAgreementDto {
   delegateContact?: string;
 
   @IsString()
-  @MinLength(6, { message: 'Zipcode must be at least 6 characters long' })
+  // @MinLength(6, { message: 'Zipcode must be at least 6 characters long' })
   zipcode: string;
 
   @IsString()
@@ -99,7 +99,6 @@ export class BusinessDto {
   state?: string;
 
   @IsString()
-  @MinLength(6, { message: 'Zipcode must be at least 6 characters long' })
   Zip?: string;
 }
 
@@ -165,7 +164,7 @@ export class CreateOrganisationDetailsDto {
   businessName?: string;
 
   @IsString()
-  @MinLength(10, { message: 'Contact must be at least 10 characters long' })
+  // @MinLength(10, { message: 'Contact must be at least 10 characters long' })
   phone?: string;
 
   @IsString()
@@ -201,7 +200,7 @@ export class CreateOrganisationDetailsDto {
   streetAddress2?: string;
 
   @IsString()
-  @MinLength(10, { message: 'Contact must be at least 10 characters long' })
+  // @MinLength(10, { message: 'Contact must be at least 10 characters long' })
   ownerPhone?: string;
 
   @IsString()
@@ -242,6 +241,7 @@ export class BankDetailsDto {
   @IsString()
   Account?: string;
 
+  @IsOptional()
   document?: Buffer;
 
   OrganisationId?: string;

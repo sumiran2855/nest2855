@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
+// import { AgreementService } from '../data/data.service';
+import { UserService } from '../user/user.service';
 @Injectable()
 export class EmailService {
   private transporter;
@@ -29,4 +31,35 @@ export class EmailService {
       throw new Error('Failed to send email');
     }
   }
+
+  // async sendAgreementEmail(id: string, to: string): Promise<void> {
+  //   try {
+  //     const agreement =
+  //       await this.agreementService.getAgreementsByUserId(id);
+
+  //     const emailTemplatePath = join(
+  //       __dirname,
+  //       '..',
+  //       'views',
+  //       'sendAgreement.ejs',
+  //     );
+  //     const htmlContent = await ejs.renderFile(emailTemplatePath, {
+  //       agreement,
+  //     });
+
+  //     await this.transporter.sendMail({
+  //       from: 'sumiran.b@cisinlabs.com',
+  //       to,
+  //       subject: 'Your Agreement Details',
+  //       html: htmlContent,
+  //     });
+
+  //     console.log(`Email sent to ${to}`);
+  //   } catch (error) {
+  //     console.error('Error sending email:', error);
+  //     throw new Error('Failed to send email');
+  //   }
+  // }
+
+  
 }

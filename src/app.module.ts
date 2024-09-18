@@ -13,10 +13,17 @@ import { Agreement, Business, Quote } from './data/entity/Agreement.entity';
 // import { BankDetails } from './data/entity/bankDetails.entity';
 import { OrganisationDetails } from './user/entities/organisation.entity';
 import { BankDetails } from './user/entities/bankDetails.entity';
+import { PDFModule } from './pdf/pdf.module';
 
-
-
-const entities = [User,Issue,Agreement,OrganisationDetails,BankDetails,Business,Quote];
+const entities = [
+  User,
+  Issue,
+  Agreement,
+  OrganisationDetails,
+  BankDetails,
+  Business,
+  Quote,
+];
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -34,7 +41,8 @@ const entities = [User,Issue,Agreement,OrganisationDetails,BankDetails,Business,
     }),
     UserModule,
     AuthModule,
-    IssuesModule,
+    IssuesModule, 
+    PDFModule,
   ],
   controllers: [AppController],
   providers: [AppService],

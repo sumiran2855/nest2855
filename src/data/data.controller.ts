@@ -9,7 +9,9 @@ import {
   Put,
   Req,
   Request,
+  Res,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -31,6 +33,9 @@ import {
   updateBankDetailsDto,
   UpdateOrganisationDetailsDto,
 } from 'src/user/dto/update-user.dto';
+import { EmailService } from '../email/email.service';
+import { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';
+import { UserService } from 'src/user/user.service';
 
 @Controller('issues')
 export class IssuesController {
@@ -44,7 +49,10 @@ export class IssuesController {
 
 @Controller('agreement')
 export class AgreementController {
-  constructor(private readonly agreementService: AgreementService) {}
+  constructor(
+    private readonly agreementService: AgreementService,
+    private readonly emailService: EmailService,
+  ) {}
 
   @Post('/create')
   async create(@Body() createAgreementDto: CreateAgreementDto) {
@@ -57,11 +65,32 @@ export class AgreementController {
   }
   @Get('user/:userId')
   async getAgreementsByUserId(@Param('userId') userId: string) {
-    
     return this.agreementService.getAgreementsByUserId(userId);
   }
 
+  @Get(':userId/send-email')
+  async sendAgreementEmail(@Param('userId') userId: string): Promise<string> {
+    try {
+      await this.agreementService.sendAgreementEmail(userId);
+
+      return 'Email sent successfully';
+    } catch (error) {
+      console.error('Error sending email:', error);
+      return 'Failed to send email';
+    }
+  }
+
+  @Get('user/:userId/email')
+  async getEmailFromAgreement(@Param('userId') userId: string): Promise<string> {
+    try {
+      const email = await this.agreementService.getUserEmailFromAgreement(userId);
+      return email;
+    } catch (error) {
+      console.error('Error fetching email:', error);
+    }
+  }
 }
+
 @Controller('organisation')
 export class OrganisationDetailsController {
   constructor(
@@ -136,7 +165,9 @@ export class BankDetailsController {
   }
 
   @Get('/getUser/:userId')
-  async getBankDetailsByUserId(@Param('userId') userId: string): Promise<BankDetails> {
+  async getBankDetailsByUserId(
+    @Param('userId') userId: string,
+  ): Promise<BankDetails> {
     console.log(userId);
     return this.bankDetailsService.findOneByUserId(userId);
   }

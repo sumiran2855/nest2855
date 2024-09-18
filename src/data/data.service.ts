@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -23,6 +25,10 @@ import {
   UpdateOrganisationDetailsDto,
   updateBankDetailsDto,
 } from 'src/user/dto/update-user.dto';
+import { UserService } from 'src/user/user.service';
+import * as ejs from 'ejs';
+import { join } from 'path';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class IssuesService {
@@ -39,6 +45,7 @@ export class IssuesService {
 
 @Injectable()
 export class AgreementService {
+  private transporter: nodemailer.Transporter;
   constructor(
     @InjectRepository(Agreement)
     private agreementRepository: Repository<Agreement>,
@@ -48,7 +55,18 @@ export class AgreementService {
     private quoteRepository: Repository<Quote>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
-  ) {}
+
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
+  ) {
+    this.transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'biswasnikhil975@gmail.com',
+        pass: 'hvrthxozpizbpsth',
+      },
+    });
+  }
 
   async create(createAgreementDto: CreateAgreementDto): Promise<Agreement> {
     try {
@@ -166,11 +184,53 @@ export class AgreementService {
         relations: ['user', 'quotes'],
         order: { createdAt: 'DESC' },
       });
+      console.log(userId);
 
       return agreements;
     } catch (error) {
       console.error('Error fetching agreements:', error);
       throw new Error('Unable to fetch agreements');
+    }
+  }
+
+  async getUserEmailFromAgreement(userId: string): Promise<string> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['agreements'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user.email;
+  }
+
+  async sendAgreementEmail(userId: string): Promise<void> {
+    try {
+      const recipientEmail = await this.userService.getUserEmailById(userId);
+
+      const emailTemplatePath = join(
+        // __dirname,
+        process.cwd(),
+        'src',
+        'email',
+        'sendAgreement.ejs',
+      );
+
+      const htmlContent = await ejs.renderFile(emailTemplatePath, {});
+
+      await this.transporter.sendMail({
+        from: 'sumiran.b@cisinlabs.com',
+        to: recipientEmail,
+        subject: 'Your Agreement Details',
+        html: htmlContent,
+      });
+
+      console.log(`Email sent to ${recipientEmail}`);
+    } catch (error) {
+      console.error('Error sending email:', error);
+      throw new Error('Failed to send email');
     }
   }
 }
@@ -225,6 +285,12 @@ export class OrganisationDetailsService {
     }
 
     Object.assign(organisationDetails, updateOrganisationDetailsDto);
+
+    if (updateOrganisationDetailsDto.businessName) {
+      organisationDetails.user.businessName =
+        updateOrganisationDetailsDto.businessName;
+      await this.usersRepository.save(organisationDetails.user); // Save the user entity
+    }
     await this.organisationDetailsRepository.save(organisationDetails);
 
     return organisationDetails;
@@ -317,6 +383,7 @@ export class BankDetailsService {
   ): Promise<BankDetails> {
     const bankDetails = await this.bankDetailsRepository.findOne({
       where: { organisation: { organisationId } },
+      relations: ['organisation'],
     });
 
     if (!bankDetails) {
@@ -324,6 +391,17 @@ export class BankDetailsService {
         'Bank details not found for this organisation.',
       );
     }
+
+    const organisation = await this.organisationDetailsRepository.findOne({
+      where: { organisationId },
+      relations: ['user'],
+    });
+
+    if (!organisation) {
+      throw new NotFoundException('Organisation not found.');
+    }
+
+    const userId = organisation.user.id;
 
     Object.assign(bankDetails, updateBankDetailsDto);
 

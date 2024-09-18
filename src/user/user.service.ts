@@ -36,7 +36,6 @@ export class UserService {
     private BankDetailsRepository: Repository<BankDetails>,
     private emailService: EmailService,
     private readonly organisationDetailsService: OrganisationDetailsService,
-
   ) {}
 
   // register user
@@ -71,10 +70,6 @@ export class UserService {
       ownerPhone: createUserDto.ownerPhone,
     };
 
-
-
-  
-
     await this.organisationDetailsService.create(organisationDetailsDto);
 
     const { password, ...result } = savedUser;
@@ -103,7 +98,6 @@ export class UserService {
       'Email Verified',
       congratsEmailText,
     );
-
     return { message: 'User verified successfully' };
   }
 
@@ -123,6 +117,16 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
     return user;
+  }
+
+  async getUserEmailById(userId: string): Promise<string> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    console.log(user);
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user.email;
   }
 
   // to get profile
@@ -153,7 +157,7 @@ export class UserService {
     }
     await this.organisationDetailsRepository.delete(id);
     await this.BankDetailsRepository.delete(id);
-    await this.usersRepository.remove(user)
+    await this.usersRepository.remove(user);
     return user;
   }
 

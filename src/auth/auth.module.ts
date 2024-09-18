@@ -10,9 +10,10 @@ import { EmailService } from '../email/email.service';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from '../user/role/roles.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { BankDetailsService, OrganisationDetailsService } from '../data/data.service';
+import { AgreementService, BankDetailsService, OrganisationDetailsService } from '../data/data.service';
 import { OrganisationDetails } from '../user/entities/organisation.entity';
 import { BankDetails } from '../user/entities/bankDetails.entity';
+import { Agreement, Business, Quote } from '../data/entity/Agreement.entity';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { BankDetails } from '../user/entities/bankDetails.entity';
         signOptions: { expiresIn: '10m' },
       }),
     }),
-    TypeOrmModule.forFeature([User,OrganisationDetails,BankDetails]),
+    TypeOrmModule.forFeature([User,OrganisationDetails,BankDetails,Agreement,Business,Quote]),
   ],
   controllers: [AuthController],
   providers: [
@@ -35,6 +36,7 @@ import { BankDetails } from '../user/entities/bankDetails.entity';
     EmailService,
     OrganisationDetailsService,
     BankDetailsService,
+    AgreementService,
     {
       provide: APP_GUARD,
       useClass: RolesGuard,

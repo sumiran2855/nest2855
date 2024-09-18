@@ -18,4 +18,16 @@ export class PdfController {
 
     res.end(pdfBuffer);
   }
+  @Get('loanPolicy')
+  async loanPolicyPdf(@Res() res: Response) {
+    const pdfBuffer = await this.pdfService.LoanPolicyPdf();
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename=agreement.pdf',
+      'Content-Length': pdfBuffer.length,
+    });
+
+    res.end(pdfBuffer);
+  }
 }
